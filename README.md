@@ -1,6 +1,7 @@
 # sample-react-box
 
-This sample is a constract written in JS for [icetea](https://github.com/TradaTech/icetea) platform.
+* This sample is a constract written in JS for [icetea](https://github.com/TradaTech/icetea) platform.
+* If you prefer React Hooks, use this [version](https://github.com/brittle-box/react-box/tree/version/react-hooks)
 
 ## Directory
 ```
