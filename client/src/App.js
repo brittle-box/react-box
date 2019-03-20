@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import { IceTeaWeb3 } from "icetea-web3";
 import { ecc } from "icetea-common";
@@ -6,106 +6,76 @@ import { ecc } from "icetea-common";
 const tweb3 = new IceTeaWeb3("ws://localhost:26657/websocket");
 const contractAddress = "005_3M76NHiZ4ipvMmTVBVJ1Wj378RLJ";
 
-class App extends Component {
-  constructor(props) {
-    super(props);
+function App() {
+  const [privateKey, setPrivateKey] = useState(
+    "CJUPdD38vwc2wMC3hDsySB7YQ6AFLGuU6QYQYaiSeBsK"
+  );
+  const [address, setAddress] = useState("");
+  const [input, setInput] = useState(0);
+  const [value, setValue] = useState(0);
 
-    const privateKey = "CJUPdD38vwc2wMC3hDsySB7YQ6AFLGuU6QYQYaiSeBsK";
-    const publicKey = ecc.toPublicKey(privateKey);
-    const address = ecc.toAddress(publicKey);
-
-    this.state = {
-      value: 0,
-      input: 0,
-      privateKey,
-      address
-    };
-  }
-
-  async updateValue() {
+  async function updateValue() {
     const contract = tweb3.contract(contractAddress);
     const value = (await contract.methods["getValue"].call()).data || 0;
-    this.setState({ value });
+    setValue(value);
   }
 
-  async componentDidMount() {
-    return this.updateValue();
-  }
-
-  handleChange(event) {
-    const target = event.target;
-    const value = target.type === "checkbox" ? target.checked : target.value;
-    const name = target.name;
-
-    if (name === "privateKey") {
-      this.handleAddress(value);
-    }
-
-    this.setState({
-      [name]: value
-    });
-  }
-
-  handleAddress(value) {
-    try {
-      const publicKey = ecc.toPublicKey(value);
-      const address = ecc.toAddress(publicKey);
-      this.setState({ address });
-    } catch (e) {
-      this.setState({ address: "NaN" });
-    }
-  }
-
-  async handleSubmit() {
-    const { privateKey, input } = this.state;
+  async function handleSubmit() {
     const contract = tweb3.contract(contractAddress, privateKey);
     await contract.methods["setValue"].sendCommit([input]);
-    return this.updateValue();
+    return updateValue();
   }
 
-  render() {
-    return (
-      <div className="App">
-        <h1>Good to Go!</h1>
-        <p>Your Brittle Box is installed and ready.</p>
-        <h2>Simple Store: {this.state.value}</h2>
+  useEffect(() => {
+    try {
+      const publicKey = ecc.toPublicKey(privateKey);
+      setAddress(ecc.toAddress(publicKey));
+    } catch (e) {
+      setAddress("NaN");
+    }
+  }, [privateKey]);
 
-        <form>
-          Private key:
-          <br />
-          <input
-            type="text"
-            id="privateKey"
-            name="privateKey"
-            value={this.state.privateKey}
-            onChange={this.handleChange.bind(this)}
-            size="60"
-          />
-          <br />
-          Address:
-          <br />
-          <input type="text" value={this.state.address} size="60" disabled />
-          <br />
-          Value:
-          <br />
-          <input
-            type="text"
-            id="value"
-            name="input"
-            value={this.state.input}
-            onChange={this.handleChange.bind(this)}
-          />
-          <br />
-          <br />
-          <input
-            type="button"
-            value="Submit"
-            onClick={this.handleSubmit.bind(this)}
-          />
-        </form>
-      </div>
-    );
-  }
+  useEffect(() => {
+    updateValue();
+    return () => tweb3.close();
+  }, []);
+
+  return (
+    <div className="App">
+      <h1>Good to Go!</h1>
+      <p>Your Brittle Box is installed and ready.</p>
+      <h2>Simple Store: {value}</h2>
+
+      <form>
+        Private key:
+        <br />
+        <input
+          type="text"
+          id="privateKey"
+          value={privateKey}
+          onChange={e => setPrivateKey(e.target.value)}
+          size="60"
+        />
+        <br />
+        Address:
+        <br />
+        <input type="text" value={address} size="60" disabled />
+        <br />
+        Value:
+        <br />
+        <input
+          type="text"
+          id="value"
+          name="input"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+        />
+        <br />
+        <br />
+        <input type="button" value="Submit" onClick={handleSubmit} />
+      </form>
+    </div>
+  );
 }
 
 export default App;
