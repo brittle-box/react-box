@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import "./App.css";
 import { IceTeaWeb3 } from "icetea-web3";
-import { TxOp, ecc } from "icetea-common";
+import { ecc } from "icetea-common";
 
 const tweb3 = new IceTeaWeb3("ws://localhost:26657/websocket");
 const contractAddress = "005_3M76NHiZ4ipvMmTVBVJ1Wj378RLJ";
@@ -23,9 +23,8 @@ class App extends Component {
   }
 
   async updateValue() {
-    const value =
-      (await tweb3.callReadonlyContractMethod(contractAddress, "getValue"))
-        .data || 0;
+    const contract = tweb3.contract(contractAddress);
+    const value = (await contract.methods["getValue"].call()).data || 0;
     this.setState({ value });
   }
 
@@ -59,15 +58,8 @@ class App extends Component {
 
   async handleSubmit() {
     const { privateKey, input } = this.state;
-    const data = {
-      op: TxOp.CALL_CONTRACT,
-      name: "setValue",
-      params: [input]
-    };
-    await tweb3.sendTransactionCommit(
-      { to: contractAddress, data },
-      privateKey
-    );
+    const contract = tweb3.contract(contractAddress, privateKey);
+    await contract.methods["setValue"].sendCommit([input]);
     return this.updateValue();
   }
 
